@@ -1,0 +1,30 @@
+{
+  "name": "opening-hours-microdata-to-osm",
+  "version": "1.0.0",
+  "description": "Conversion between schema.org's openingHoursSpecification and OSM's opening_hours.",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc ava",
+    "test:watch": "ava --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ppaskaris/opening-hours-microdata-to-osm.git"
+  },
+  "keywords": [
+    "openingHoursSpecification",
+    "opening_hours",
+    "schema.org",
+    "OpenStreetMap"
+  ],
+  "author": "Patrick Paskaris <patrick@paskaris.gr>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ppaskaris/opening-hours-microdata-to-osm/issues"
+  },
+  "homepage": "https://github.com/ppaskaris/opening-hours-microdata-to-osm#readme",
+  "devDependencies": {
+    "ava": "^0.17.0",
+    "nyc": "^10.1.2"
+  }
+}
