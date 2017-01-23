@@ -1,5 +1,7 @@
 'use strict';
 
+const assert = require('assert');
+
 const WEEKDAY = new Map([
   ['Monday', 'Mo'],
   ['Tuesday', 'Tu'],
@@ -32,6 +34,41 @@ function compareWeekdayOrder(a, b) {
   return WEEKDAY_ORDER.get(a) - WEEKDAY_ORDER.get(b);
 }
 
+function stringifyWeekdays(wws) {
+  return wws
+    .reduce((ranges, next, i, array) => {
+      const prev = i > 0 ? array[i - 1] : next;
+      const diff = WEEKDAY_ORDER.get(next) - WEEKDAY_ORDER.get(prev);
+      assert(diff >= 0, 'diff >= 0');
+      let range;
+      if (diff <= 1 && ranges.length > 0) {
+        range = ranges[ranges.length - 1];
+      } else {
+        range = ranges[ranges.length] = [];
+      }
+      range.push(next);
+      return ranges;
+    }, [])
+    .map((range) => {
+      if (range.length > 2) {
+        return `${range[0]}-${range[range.length - 1]}`;
+      } else if (range.length > 1) {
+        return `${range[0]},${range[1]}`;
+      } else {
+        return range[0];
+      }
+    })
+    .join(',');
+}
+
+function ensureArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  } else {
+    return [value];
+  }
+}
+
 function stringify(ohss) {
   if (ohss == null) {
     return '';
@@ -43,27 +80,29 @@ function stringify(ohss) {
 
   const grouping1 = new Map();
   for (const ohs of ohss) {
-    const { dayOfWeek } = ohs;
-    const weekday = WEEKDAY.get(dayOfWeek);
-    if (weekday == null) {
-      continue;
+    const dayOfWeeks = ensureArray(ohs.dayOfWeek);
+    for (const dayOfWeek of dayOfWeeks) {
+      const weekday = WEEKDAY.get(dayOfWeek);
+      if (weekday == null) {
+        continue;
+      }
+
+      const { opens, closes } = ohs;
+      if (opens == null || closes == null) {
+        continue;
+      }
+
+      const open = opens.slice(0, 5);
+      const close = closes.slice(0, 5);
+      const timespan = `${open}-${close}`;
+
+      let timespans = grouping1.get(weekday);
+      if (timespans == null) {
+        grouping1.set(weekday, timespans = []);
+      }
+
+      timespans.push(timespan);
     }
-
-    const { opens, closes } = ohs;
-    if (opens == null || closes == null) {
-      continue;
-    }
-
-    const open = opens.slice(0, 5);
-    const close = closes.slice(0, 5);
-    const timespan = `${open}-${close}`;
-
-    let timespans = grouping1.get(weekday);
-    if (timespans == null) {
-      grouping1.set(weekday, timespans = []);
-    }
-
-    timespans.push(timespan);
   }
 
   const grouping2 = new Map();
@@ -83,8 +122,8 @@ function stringify(ohss) {
   const rules = Array
     .from(grouping2)
     .sort((a, b) => compareWeekdayOrder(a[1][0], b[1][0]))
-    .map(([timespan, weekdays]) => {
-      const range = weekdays.join(',');
+    .map(([timespan, wws]) => {
+      const range = stringifyWeekdays(wws);
       return `${range} ${timespan}`;
     });
 

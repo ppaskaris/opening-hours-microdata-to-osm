@@ -3,12 +3,12 @@
 const test = require('ava');
 const stringify = require('./index').stringify;
 
-test('null', (t) => {
+test('handles null', (t) => {
   const result = stringify(null);
   t.is(result, '');
 });
 
-test('one day', (t) => {
+test('handles single day', (t) => {
   const result = stringify({
     '@type': 'OpeningHoursSpecification',
     closes: '17:00:00',
@@ -18,7 +18,33 @@ test('one day', (t) => {
   t.is(result, 'Mo 09:00-17:00');
 });
 
-test('one day as array', (t) => {
+test('ignores unknown dayOfWeek', (t) => {
+  const result = stringify({
+    '@type': 'OpeningHoursSpecification',
+    closes: '17:00:00',
+    dayOfWeek: 'http://schema.org/Morndas',
+    opens: '09:00:00'
+  });
+  t.is(result, '');
+});
+
+test('ignores unbounded hours', (t) => {
+  const result = stringify([
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: 'http://schema.org/Monday',
+      opens: '09:00:00'
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      closes: '17:00:00',
+      dayOfWeek: 'http://schema.org/Tuesday',
+    }
+  ]);
+  t.is(result, '');
+});
+
+test('handles single day (as array)', (t) => {
   const result = stringify([
     {
       '@type': 'OpeningHoursSpecification',
@@ -30,7 +56,12 @@ test('one day as array', (t) => {
   t.is(result, 'Mo 09:00-17:00');
 });
 
-test('two days, same timespan', (t) => {
+test('handles empty array', (t) => {
+  const result = stringify([]);
+  t.is(result, '');
+});
+
+test('handles two days with same hours', (t) => {
   const result = stringify([
     {
       '@type': 'OpeningHoursSpecification',
@@ -49,7 +80,7 @@ test('two days, same timespan', (t) => {
 });
 
 
-test('three days, two timespans', (t) => {
+test('handles three days, two with same hours', (t) => {
   const result = stringify([
     {
       '@type': 'OpeningHoursSpecification',
@@ -73,7 +104,7 @@ test('three days, two timespans', (t) => {
   t.is(result, 'Mo,Tu 09:00-17:00; We 09:00-18:30');
 });
 
-test('three days, two timespans (out of order)', (t) => {
+test('handles three days, two with same hours (out of order)', (t) => {
   const result = stringify([
     {
       '@type': 'OpeningHoursSpecification',
@@ -97,7 +128,7 @@ test('three days, two timespans (out of order)', (t) => {
   t.is(result, 'Mo,Tu 09:00-17:00; We 09:00-18:30');
 });
 
-test('one day, two timespans', (t) => {
+test('handles one day with different hours', (t) => {
   const result = stringify([
     {
       '@type': 'OpeningHoursSpecification',
@@ -115,7 +146,7 @@ test('one day, two timespans', (t) => {
   t.is(result, 'Mo 09:00-17:00,20:00-23:59');
 });
 
-test('one day, two timespans (out of order)', (t) => {
+test('handles one day with different hours (out of order)', (t) => {
   const result = stringify([
     {
       '@type': 'OpeningHoursSpecification',
@@ -131,4 +162,76 @@ test('one day, two timespans (out of order)', (t) => {
     }
   ]);
   t.is(result, 'Mo 09:00-17:00,20:00-23:59');
+});
+
+test('handles several days with same hours', (t) => {
+  const result = stringify([
+    {
+      '@type': 'OpeningHoursSpecification',
+      'closes': '17:00:00',
+      'dayOfWeek': 'http://schema.org/Thursday',
+      'opens': '09:00:00'
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      'closes': '17:00:00',
+      'dayOfWeek': 'http://schema.org/Tuesday',
+      'opens': '09:00:00'
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      'closes': '17:00:00',
+      'dayOfWeek': 'http://schema.org/Friday',
+      'opens': '09:00:00'
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      'closes': '17:00:00',
+      'dayOfWeek': 'http://schema.org/Monday',
+      'opens': '09:00:00'
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      'closes': '17:00:00',
+      'dayOfWeek': 'http://schema.org/Wednesday',
+      'opens': '09:00:00'
+    }
+  ]);
+  t.is(result, 'Mo-Fr 09:00-17:00');
+});
+
+test('handles dayOfWeek as an array', (t) => {
+  const result = stringify([
+    {
+      '@type': 'OpeningHoursSpecification',
+      'closes': '17:00:00',
+      'dayOfWeek': [
+        'http://schema.org/Thursday',
+        'http://schema.org/Tuesday',
+        'http://schema.org/Friday',
+        'http://schema.org/Monday',
+        'http://schema.org/Wednesday'
+      ],
+      'opens': '09:00:00'
+    }
+  ]);
+  t.is(result, 'Mo-Fr 09:00-17:00');
+});
+
+test('handles dayOfWeek as an array (aliases)', (t) => {
+  const result = stringify([
+    {
+      '@type': 'OpeningHoursSpecification',
+      'closes': '17:00:00',
+      'dayOfWeek': [
+        'Thursday',
+        'Tuesday',
+        'Friday',
+        'Monday',
+        'Wednesday'
+      ],
+      'opens': '09:00:00'
+    }
+  ]);
+  t.is(result, 'Mo-Fr 09:00-17:00');
 });
