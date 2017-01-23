@@ -94,6 +94,10 @@ function stringify(ohss) {
 
       const open = opens.slice(0, 5);
       const close = closes.slice(0, 5);
+      if (open === close) {
+        continue;
+      }
+
       const timespan = `${open}-${close}`;
 
       let timespans = grouping1.get(weekday);

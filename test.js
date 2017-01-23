@@ -44,6 +44,24 @@ test('ignores unbounded hours', (t) => {
   t.is(result, '');
 });
 
+test('ignores empty range (closed)', (t) => {
+  const result = stringify([
+    {
+      '@type': 'OpeningHoursSpecification',
+      closes: '17:00:00',
+      dayOfWeek: 'http://schema.org/Monday',
+      opens: '09:00:00'
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      closes: '00:00:00',
+      dayOfWeek: 'http://schema.org/Tuesday',
+      opens: '00:00:00'
+    }
+  ]);
+  t.is(result, 'Mo 09:00-17:00');
+});
+
 test('handles single day (as array)', (t) => {
   const result = stringify([
     {
